@@ -1,6 +1,12 @@
 use std::cmp::Ordering;
 
-// TODO: implement the `min` function.
+fn min<T: std::cmp::Ord>(a: T, b: T) -> T {
+    match a.cmp(&b) {
+        Ordering::Greater => b,
+        Ordering::Less => a,
+        _ => a,
+    }
+}
 
 #[cfg(test)]
 mod tests {
