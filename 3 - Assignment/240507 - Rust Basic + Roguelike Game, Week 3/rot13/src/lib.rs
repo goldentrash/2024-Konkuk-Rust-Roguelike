@@ -5,7 +5,21 @@ struct RotDecoder<R: Read> {
     rot: u8,
 }
 
-// Implement the `Read` trait for `RotDecoder`.
+impl<R: Read> Read for RotDecoder<R> {
+    fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+        match self.input.read(buf) {
+            Ok(n) => {
+                // XXX: How can I fix this...?
+                for byte in &mut buf[..n] {
+                    *byte = (*byte).wrapping_add(self.rot);
+                }
+
+                Ok(n)
+            }
+            Err(err) => Err(err),
+        }
+    }
+}
 
 #[cfg(test)]
 mod tests {
