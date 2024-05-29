@@ -9,9 +9,14 @@ impl<R: Read> Read for RotDecoder<R> {
     fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
         match self.input.read(buf) {
             Ok(n) => {
-                // XXX: How can I fix this...?
-                for byte in &mut buf[..n] {
-                    *byte = (*byte).wrapping_add(self.rot);
+                for byte in buf {
+                    if (*byte).is_ascii_alphabetic() {
+                        *byte += self.rot;
+
+                        if !(*byte).is_ascii_alphabetic() {
+                            *byte -= b'Z' - b'A' + 1;
+                        }
+                    }
                 }
 
                 Ok(n)
