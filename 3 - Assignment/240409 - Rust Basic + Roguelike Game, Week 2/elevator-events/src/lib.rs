@@ -59,6 +59,10 @@ mod tests {
             format!("{:?}", lobby_call_button_pressed(0, Direction::Up)),
             "ButtonPressed(LobbyCall(Up, 0))"
         );
+        assert_eq!(
+            format!("{:?}", lobby_call_button_pressed(3, Direction::Down)),
+            "ButtonPressed(LobbyCall(Down, 3))"
+        );
         assert_eq!(format!("{:?}", car_arrived(0)), "CarArrived(0)");
         assert_eq!(format!("{:?}", car_door_opened()), "CarDoorOpened");
         assert_eq!(
