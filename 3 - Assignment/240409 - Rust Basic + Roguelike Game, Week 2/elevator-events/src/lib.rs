@@ -1,8 +1,11 @@
+// type alias for readability
+type Floor = i32;
+
 // An event in the elevator system that the controller must react to.
 #[derive(Debug)]
 enum Event {
     ButtonPressed(Button),
-    CarArrived(i32),
+    CarArrived(Floor),
     CarDoorOpened,
     CarDoorClosed,
 }
@@ -10,8 +13,8 @@ enum Event {
 // Pressed button.
 #[derive(Debug)]
 enum Button {
-    LobbyCall(Direction, i32),
-    CarFloor(i32),
+    LobbyCall(Direction, Floor),
+    CarFloor(Floor),
 }
 
 // A direction of travel.
@@ -22,7 +25,7 @@ enum Direction {
 }
 
 // The car has arrived at the given floor.
-fn car_arrived(floor: i32) -> Event {
+fn car_arrived(floor: Floor) -> Event {
     Event::CarArrived(floor)
 }
 
@@ -37,12 +40,12 @@ fn car_door_closed() -> Event {
 }
 
 // A directional button was pressed in an elevator lobby on the given floor.
-fn lobby_call_button_pressed(floor: i32, dir: Direction) -> Event {
+fn lobby_call_button_pressed(floor: Floor, dir: Direction) -> Event {
     Event::ButtonPressed(Button::LobbyCall(dir, floor))
 }
 
 // A floor button was pressed in the elevator car.
-fn car_floor_button_pressed(floor: i32) -> Event {
+fn car_floor_button_pressed(floor: Floor) -> Event {
     Event::ButtonPressed(Button::CarFloor(floor))
 }
 
