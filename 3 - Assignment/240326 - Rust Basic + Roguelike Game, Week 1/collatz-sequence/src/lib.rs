@@ -6,7 +6,7 @@ pub fn collatz_length(mut n: i32) -> u32 {
         length += 1;
     }
 
-    return length;
+    length
 }
 
 #[cfg(test)]
