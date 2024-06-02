@@ -10,12 +10,10 @@ impl<R: Read> Read for RotDecoder<R> {
         match self.input.read(buf) {
             Ok(n) => {
                 for byte in buf {
-                    if (*byte).is_ascii_alphabetic() {
-                        *byte += self.rot;
-
-                        if !(*byte).is_ascii_alphabetic() {
-                            *byte -= b'Z' - b'A' + 1;
-                        }
+                    if (*byte).is_ascii_lowercase() {
+                        *byte = ((*byte) - b'a' + self.rot) % (b'Z' - b'A' + 1) + b'a';
+                    } else if (*byte).is_ascii_uppercase() {
+                        *byte = ((*byte) - b'A' + self.rot) % (b'Z' - b'A' + 1) + b'A';
                     }
                 }
 
