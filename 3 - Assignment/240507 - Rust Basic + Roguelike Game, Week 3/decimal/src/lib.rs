@@ -1,11 +1,121 @@
-// Type implementing arbitrary-precision decimal arithmetic
+use num_bigint::BigInt;
+use std::{
+    cmp::max,
+    ops::{Add, Mul, Sub},
+    str::FromStr,
+};
+
+#[derive(Debug, Clone, Default)]
 pub struct Decimal {
-    // implement your type here
+    num: BigInt,
+    len_decimal: u32,
 }
 
 impl Decimal {
     pub fn try_from(input: &str) -> Option<Decimal> {
-        unimplemented!("Create a new decimal with a value of {}", input)
+        let len_decimal = input
+            .chars()
+            .rev()
+            .position(|c| c == '.')
+            .or(Some(0))
+            .unwrap();
+        let len_decimal = len_decimal.try_into().unwrap();
+
+        let num_str = input.replace(".", "");
+        let num = BigInt::from_str(&num_str).unwrap();
+
+        Some(Decimal { num, len_decimal })
+    }
+}
+
+impl PartialEq for Decimal {
+    fn eq(&self, other: &Self) -> bool {
+        let len_decimal = max(self.len_decimal, other.len_decimal);
+
+        // Why should I use 'clone'?
+        let lhs = self.num.clone()
+            * BigInt::from_str("10")
+                .unwrap()
+                .pow(len_decimal - self.len_decimal);
+        let rhs = other.num.clone()
+            * BigInt::from_str("10")
+                .unwrap()
+                .pow(len_decimal - other.len_decimal);
+
+        lhs == rhs
+    }
+}
+
+impl PartialOrd for Decimal {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        let len_decimal = max(self.len_decimal, other.len_decimal);
+
+        // Why should I use 'clone'?
+        let lhs = self.num.clone()
+            * BigInt::from_str("10")
+                .unwrap()
+                .pow(len_decimal - self.len_decimal);
+        let rhs = other.num.clone()
+            * BigInt::from_str("10")
+                .unwrap()
+                .pow(len_decimal - other.len_decimal);
+
+        Some(lhs.cmp(&rhs))
+    }
+}
+
+impl Add for Decimal {
+    type Output = Self;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        let len_decimal = max(self.len_decimal, rhs.len_decimal);
+
+        // Why is it okay to do without "cloning"?
+        let lhs = self.num
+            * BigInt::from_str("10")
+                .unwrap()
+                .pow(len_decimal - self.len_decimal);
+        let rhs = rhs.num
+            * BigInt::from_str("10")
+                .unwrap()
+                .pow(len_decimal - rhs.len_decimal);
+
+        let num = lhs + rhs;
+
+        Decimal { num, len_decimal }
+    }
+}
+
+impl Sub for Decimal {
+    type Output = Self;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        let len_decimal = max(self.len_decimal, rhs.len_decimal);
+
+        // Why is it okay to do without "cloning"?
+        let lhs = self.num
+            * BigInt::from_str("10")
+                .unwrap()
+                .pow(len_decimal - self.len_decimal);
+        let rhs = rhs.num
+            * BigInt::from_str("10")
+                .unwrap()
+                .pow(len_decimal - rhs.len_decimal);
+
+        let num = lhs - rhs;
+
+        Decimal { num, len_decimal }
+    }
+}
+
+impl Mul for Decimal {
+    type Output = Self;
+
+    fn mul(self, rhs: Self) -> Self::Output {
+        let len_decimal = self.len_decimal + rhs.len_decimal;
+        let num = self.num * rhs.num;
+
+        Decimal { num, len_decimal }
     }
 }
 
