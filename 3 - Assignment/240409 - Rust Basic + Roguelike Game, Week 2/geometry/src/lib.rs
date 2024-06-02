@@ -9,8 +9,8 @@ fn magnitude(vec: &mut [f64; 3]) -> f64 {
 // coordinates by that magnitude.
 fn normalize(vec: &mut [f64; 3]) {
     let magnitude = magnitude(vec);
-    for el in vec {
-        *el /= magnitude;
+    for elem in vec {
+        *elem /= magnitude;
     }
 }
 
