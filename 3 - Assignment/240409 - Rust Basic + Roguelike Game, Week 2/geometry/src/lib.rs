@@ -1,7 +1,7 @@
 // Calculate the magnitude of a vector by summing the squares of its coordinates
 // and taking the square root. Use the `sqrt()` method to calculate the square
 // root, like `v.sqrt()`.
-fn magnitude(vec: &mut [f64; 3]) -> f64 {
+fn magnitude(vec: &[f64; 3]) -> f64 {
     vec.iter().map(|x| x.powi(2)).sum::<f64>().sqrt()
 }
 
