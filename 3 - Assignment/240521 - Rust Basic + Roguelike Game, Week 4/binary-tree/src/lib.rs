@@ -19,6 +19,75 @@ pub struct BinaryTree<T: Ord> {
 }
 
 // Implement `new`, `insert`, `len`, and `has`.
+impl<T: Ord> BinaryTree<T> {
+    fn new() -> Self {
+        Self {
+            root: Subtree(None),
+        }
+    }
+
+    fn insert(&mut self, trg: T) {
+        let mut subtree = &mut self.root;
+
+        while subtree.0.is_some() {
+            let node = subtree.0.as_deref_mut().unwrap();
+            let val = &node.value;
+
+            if trg < *val {
+                subtree = &mut node.left;
+            } else if trg > *val {
+                subtree = &mut node.right;
+            } else {
+                return;
+            }
+        }
+
+        subtree.0 = Some(Box::new(Node {
+            value: trg,
+            left: Subtree(None),
+            right: Subtree(None),
+        }));
+    }
+
+    fn len(&self) -> u32 {
+        let mut q = Vec::<&Subtree<T>>::new();
+        let mut ret = 0;
+
+        q.push(&self.root);
+        while let Some(curr) = q.pop() {
+            if curr.0.is_none() {
+                continue;
+            }
+
+            ret += 1;
+
+            let node = curr.0.as_ref().unwrap();
+            q.push(&node.left);
+            q.push(&node.right);
+        }
+
+        ret
+    }
+
+    fn has(&self, trg: &T) -> bool {
+        let mut subtree = &self.root;
+
+        while subtree.0.is_some() {
+            let node = subtree.0.as_ref().unwrap();
+            let val = &node.value;
+
+            if *trg < *val {
+                subtree = &node.left;
+            } else if *trg > *val {
+                subtree = &node.right;
+            } else {
+                return true;
+            }
+        }
+
+        false
+    }
+}
 
 #[cfg(test)]
 mod tests {
