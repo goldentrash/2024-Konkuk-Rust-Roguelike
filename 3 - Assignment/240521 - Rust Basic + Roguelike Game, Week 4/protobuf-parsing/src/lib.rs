@@ -7,8 +7,8 @@ enum Error {
     InvalidVarint,
     #[error("Invalid wire-type")]
     InvalidWireType,
-    #[error("Unexpected EOF")]
-    UnexpectedEOF,
+    // #[error("Unexpected EOF")]
+    // UnexpectedEOF,
     #[error("Invalid length")]
     InvalidSize(#[from] std::num::TryFromIntError),
     #[error("Unexpected wire-type)")]
@@ -21,7 +21,6 @@ enum Error {
 enum WireType {
     // The Varint WireType indicates the value is a single VARINT.
     Varint,
-    //I64,  -- not needed for this exercise
     // The Len WireType indicates that the value is a length represented as a
     // VARINT followed by exactly that number of bytes.
     Len,
@@ -34,7 +33,6 @@ enum WireType {
 /// A field's value, typed based on the wire type.
 enum FieldValue<'a> {
     Varint(u64),
-    //I64(i64),  -- not needed for this exercise
     Len(&'a [u8]),
     I32(i32),
 }
@@ -56,7 +54,6 @@ impl TryFrom<u64> for WireType {
     fn try_from(value: u64) -> Result<WireType, Error> {
         Ok(match value {
             0 => WireType::Varint,
-            //1 => WireType::I64,  -- not needed for this exercise
             2 => WireType::Len,
             5 => WireType::I32,
             _ => return Err(Error::InvalidWireType),
@@ -127,10 +124,28 @@ fn parse_field(data: &[u8]) -> Result<(Field, &[u8]), Error> {
     let (tag, remainder) = parse_varint(data)?;
     let (field_num, wire_type) = unpack_tag(tag)?;
     let (fieldvalue, remainder) = match wire_type {
-        _ => todo!("Based on the wire type, build a Field, consuming as many bytes as necessary."),
+        WireType::Varint => {
+            let (value, remainder) = parse_varint(remainder)?;
+            (FieldValue::Varint(value), remainder)
+        }
+        WireType::Len => {
+            let (len, remainder) = parse_varint(remainder)?;
+            let (value, remainder) = remainder.split_at(len as usize);
+            (FieldValue::Len(value), remainder)
+        }
+        WireType::I32 => {
+            let (value, remainder) = parse_varint(remainder)?;
+            (FieldValue::I32(value as i32), remainder)
+        }
     };
 
-    todo!("Return the field, and any un-consumed bytes.")
+    Ok((
+        Field {
+            field_num,
+            value: fieldvalue,
+        },
+        remainder,
+    ))
 }
 
 // Parse a message in the given data, calling `T::add_field` for each field in
@@ -162,7 +177,45 @@ struct Person<'a> {
     phone: Vec<PhoneNumber<'a>>,
 }
 
-// TODO: Implement ProtoMessage for Person and PhoneNumber.
+impl<'a> ProtoMessage<'a> for PhoneNumber<'a> {
+    fn add_field(&mut self, field: Field<'a>) -> Result<(), Error> {
+        match field.field_num {
+            0 => self.number = field.value.as_string()?,
+            1 => self.type_ = field.value.as_string()?,
+            _ => return Err(Error::InvalidVarint),
+        };
+        Ok(())
+    }
+}
+
+impl<'a> ProtoMessage<'a> for Person<'a> {
+    fn add_field(&mut self, field: Field<'a>) -> Result<(), Error> {
+        match field.field_num {
+            0 => self.name = field.value.as_string()?,
+            1 => self.id = field.value.as_u64()?,
+            2 => {
+                let mut phone_number = PhoneNumber::default();
+                let mut data = match field.value {
+                    FieldValue::Varint(_) => return Err(Error::InvalidVarint),
+                    FieldValue::Len(data) => data,
+                    FieldValue::I32(_) => return Err(Error::InvalidVarint),
+                };
+
+                while !data.is_empty() {
+                    let (field, remainder) = parse_field(data)?;
+                    if let Err(error) = phone_number.add_field(field) {
+                        return Err(error);
+                    }
+                    data = remainder;
+                }
+
+                self.phone.push(phone_number);
+            }
+            _ => return Err(Error::InvalidVarint),
+        }
+        Ok(())
+    }
+}
 
 #[cfg(test)]
 mod test {
