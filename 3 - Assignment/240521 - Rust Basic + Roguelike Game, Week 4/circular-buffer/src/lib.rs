@@ -1,13 +1,10 @@
-use std::marker::PhantomData;
+use std::collections::VecDeque;
 #[cfg(test)]
 use std::rc::Rc;
 
 pub struct CircularBuffer<T> {
-    // This field is here to make the template compile and not to
-    // complain about unused type parameter 'T'. Once you start
-    // solving the exercise, delete this field and the 'std::marker::PhantomData'
-    // import.
-    field: PhantomData<T>,
+    capacity: usize,
+    buffer: VecDeque<T>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -18,29 +15,40 @@ pub enum Error {
 
 impl<T> CircularBuffer<T> {
     pub fn new(capacity: usize) -> Self {
-        unimplemented!(
-            "Construct a new CircularBuffer with the capacity to hold {}.",
-            match capacity {
-                1 => "1 element".to_string(),
-                _ => format!("{} elements", capacity),
-            }
-        );
+        Self {
+            capacity,
+            buffer: VecDeque::<T>::new(),
+        }
     }
 
     pub fn write(&mut self, _element: T) -> Result<(), Error> {
-        unimplemented!("Write the passed element to the CircularBuffer or return FullBuffer error if CircularBuffer is full.");
+        if self.buffer.len() == self.capacity {
+            return Err(Error::FullBuffer);
+        }
+
+        self.buffer.push_back(_element);
+        Ok(())
     }
 
     pub fn read(&mut self) -> Result<T, Error> {
-        unimplemented!("Read the oldest element from the CircularBuffer or return EmptyBuffer error if CircularBuffer is empty.");
+        if self.buffer.is_empty() {
+            return Err(Error::EmptyBuffer);
+        }
+
+        let ret = self.buffer.pop_front().unwrap();
+        Ok(ret)
     }
 
     pub fn clear(&mut self) {
-        unimplemented!("Clear the CircularBuffer.");
+        self.buffer.clear();
     }
 
     pub fn overwrite(&mut self, _element: T) {
-        unimplemented!("Write the passed element to the CircularBuffer, overwriting the existing elements if CircularBuffer is full.");
+        if self.buffer.len() == self.capacity {
+            self.buffer.pop_front();
+        }
+
+        let _ = Self::write(self, _element);
     }
 }
 
