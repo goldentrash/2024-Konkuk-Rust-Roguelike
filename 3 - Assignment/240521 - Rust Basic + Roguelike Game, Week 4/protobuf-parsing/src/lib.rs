@@ -180,8 +180,8 @@ struct Person<'a> {
 impl<'a> ProtoMessage<'a> for PhoneNumber<'a> {
     fn add_field(&mut self, field: Field<'a>) -> Result<(), Error> {
         match field.field_num {
-            0 => self.number = field.value.as_string()?,
-            1 => self.type_ = field.value.as_string()?,
+            1 => self.number = field.value.as_string()?,
+            2 => self.type_ = field.value.as_string()?,
             _ => return Err(Error::InvalidVarint),
         };
         Ok(())
@@ -191,9 +191,9 @@ impl<'a> ProtoMessage<'a> for PhoneNumber<'a> {
 impl<'a> ProtoMessage<'a> for Person<'a> {
     fn add_field(&mut self, field: Field<'a>) -> Result<(), Error> {
         match field.field_num {
-            0 => self.name = field.value.as_string()?,
-            1 => self.id = field.value.as_u64()?,
-            2 => {
+            1 => self.name = field.value.as_string()?,
+            2 => self.id = field.value.as_u64()?,
+            3 => {
                 let mut phone_number = PhoneNumber::default();
                 let mut data = match field.value {
                     FieldValue::Varint(_) => return Err(Error::InvalidVarint),
