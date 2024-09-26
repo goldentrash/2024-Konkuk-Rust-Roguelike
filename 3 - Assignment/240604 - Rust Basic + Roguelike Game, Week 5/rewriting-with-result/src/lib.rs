@@ -63,12 +63,12 @@ impl<'a> Iterator for Tokenizer<'a> {
     }
 }
 
-fn parse(input: &str) -> Expression {
+fn parse(input: &str) -> Result<Expression, &str> {
     let mut tokens = tokenize(input);
 
-    fn parse_expr<'a>(tokens: &mut Tokenizer<'a>) -> Expression {
+    fn parse_expr<'a>(tokens: &mut Tokenizer<'a>) -> Result<Expression, &'a str> {
         let Some(tok) = tokens.next() else {
-            panic!("Unexpected end of input");
+            return Err("UnexpectedEOF");
         };
 
         let expr = match tok {
@@ -77,16 +77,17 @@ fn parse(input: &str) -> Expression {
                 Expression::Number(v)
             }
             Token::Identifier(ident) => Expression::Var(ident),
-            Token::Operator(_) => panic!("Unexpected token {tok:?}"),
+            Token::Operator(_) => return Err("Unexpected token {tok:?}"),
         };
 
         // Look ahead to parse a binary operation if present.
         match tokens.next() {
-            None => expr,
-            Some(Token::Operator(op)) => {
-                Expression::Operation(Box::new(expr), op, Box::new(parse_expr(tokens)))
-            }
-            Some(tok) => panic!("Unexpected token {tok:?}"),
+            None => Ok(expr),
+            Some(Token::Operator(op)) => match parse_expr(tokens) {
+                Ok(expr2) => Ok(Expression::Operation(Box::new(expr), op, Box::new(expr2))),
+                Err(err) => Err(err),
+            },
+            Some(_) => Err("Unexpected token {tok:?}"),
         }
     }
 
