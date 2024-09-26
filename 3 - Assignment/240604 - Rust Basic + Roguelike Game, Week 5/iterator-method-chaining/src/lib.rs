@@ -6,7 +6,37 @@ fn offset_differences<N>(offset: usize, values: Vec<N>) -> Vec<N>
 where
     N: Copy + std::ops::Sub<Output = N>,
 {
-    unimplemented!()
+    OffDiff {
+        cursor: 0,
+        offset,
+        values,
+    }
+    .into_iter()
+    .collect()
+}
+
+struct OffDiff<N> {
+    cursor: usize,
+    offset: usize,
+    values: Vec<N>,
+}
+
+impl<N: Copy + std::ops::Sub<Output = N>> Iterator for OffDiff<N> {
+    type Item = N;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let val_len = self.values.len();
+        if self.cursor == val_len {
+            return None;
+        }
+
+        let a = self.values[self.cursor];
+        let b = self.values[(self.cursor + self.offset) % val_len];
+
+        self.cursor += 1;
+
+        Some(b - a)
+    }
 }
 
 #[test]
