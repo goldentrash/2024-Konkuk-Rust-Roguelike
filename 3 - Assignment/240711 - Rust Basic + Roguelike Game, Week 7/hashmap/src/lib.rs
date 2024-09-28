@@ -3,7 +3,20 @@ use std::collections::HashMap;
 #[macro_export]
 macro_rules! hashmap {
     () => {
-        unimplemented!()
+        // 가장 앞의 `::`에 주목
+        // 절대경로를
+        ::std::collections::HashMap::new()
+    };
+    // `$(,)?`에 주목
+    ( $( $key:literal => $val:expr ),* $(,)? ) => {
+        // `{}`로 block으로 감쌈에 주목
+        {
+            let mut hm = ::std::collections::HashMap::new();
+            $(
+                hm.insert($key, $val);
+            )*
+            hm
+        }
     };
 }
 
