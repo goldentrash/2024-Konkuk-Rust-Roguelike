@@ -1,5 +1,7 @@
 use image::codecs::png::PngEncoder;
 use image::{ExtendedColorType, ImageEncoder};
+
+use num::pow::Pow;
 use num::Complex;
 
 use std::env;
@@ -14,8 +16,23 @@ use std::str::FromStr;
 /// on the origin. If `c` seems to be a member (more precisely,
 /// if we reached the iteration limit without being able to prove that
 /// `c` is not a member), return `None`.
-fn escape_time(_c: Complex<f64>, _limit: usize) -> Option<usize> {
-    todo!()
+fn escape_time(c: Complex<f64>, limit: usize) -> Option<usize> {
+    let mut re = 0.;
+    let mut im = 0.;
+
+    for i in 0..limit {
+        let tre = re;
+        let tim = im;
+
+        re = tre.pow(2) - tim.pow(2) + c.re;
+        im = 2. * tre * tim + c.im;
+
+        if re.pow(2) + im.pow(2) > 4. {
+            return Some(i + 1);
+        }
+    }
+
+    None
 }
 
 /// Parse the string `s` as a coordinate pair, like `"400x600"` or `"1.0,0.5"`.
@@ -26,13 +43,24 @@ fn escape_time(_c: Complex<f64>, _limit: usize) -> Option<usize> {
 ///
 /// If `s` has the proper form, return `Some<(x, y)>`.
 /// If it doesn't parse correctly, return `None`.
-fn parse_pair<T: FromStr>(_s: &str, _separator: char) -> Option<(T, T)> {
-    todo!()
+fn parse_pair<T: FromStr>(s: &str, separator: char) -> Option<(T, T)> {
+    let coords: Vec<&str> = s.split(separator).collect();
+
+    if coords.len() != 2 {
+        return None;
+    }
+
+    if let (Ok(x), Ok(y)) = (T::from_str(coords[0]), T::from_str(coords[1])) {
+        return Some((x, y));
+    }
+
+    None
 }
 
 /// Parse a pair of floating-point numbers separated by a comma as a complex number.
-fn parse_complex(_s: &str) -> Option<Complex<f64>> {
-    todo!()
+fn parse_complex(s: &str) -> Option<Complex<f64>> {
+    let (a, b) = parse_pair::<f64>(s, ',')?;
+    Some(Complex { re: a, im: b })
 }
 
 /// Given the row and column of a pixel in the output image,
@@ -43,12 +71,18 @@ fn parse_complex(_s: &str) -> Option<Complex<f64>> {
 /// The `upper_left` and `lower_right` parameters are points on the complex plane
 /// designating the area our image covers.
 fn pixel_to_point(
-    _bounds: (usize, usize),
-    _pixel: (usize, usize),
-    _upper_left: Complex<f64>,
-    _lower_right: Complex<f64>,
+    bounds: (usize, usize),
+    pixel: (usize, usize),
+    upper_left: Complex<f64>,
+    lower_right: Complex<f64>,
 ) -> Complex<f64> {
-    todo!()
+    let dx = (upper_left.re - lower_right.re) / bounds.1 as f64;
+    let dy = (upper_left.im - lower_right.im) / bounds.0 as f64;
+
+    Complex {
+        re: upper_left.re - pixel.1 as f64 * dx,
+        im: upper_left.im - pixel.0 as f64 * dy,
+    }
 }
 
 /// Render a rectangle of the Mandelbrot set into a buffer of pixels.
@@ -58,18 +92,26 @@ fn pixel_to_point(
 /// arguments specify points on the complex plane corresponding to the upper-left
 /// and lower-right corners of the pixel buffer.
 fn render(
-    _pixels: &mut [u8],
-    _bounds: (usize, usize),
-    _upper_left: Complex<f64>,
-    _lower_right: Complex<f64>,
+    pixels: &mut [u8],
+    bounds: (usize, usize),
+    upper_left: Complex<f64>,
+    lower_right: Complex<f64>,
 ) {
-    todo!()
+    for h in 0..bounds.0 {
+        for w in 0..bounds.1 {
+            let c = pixel_to_point(bounds, (h, w), upper_left, lower_right);
+            pixels[h * bounds.1 + w] = escape_time(c, 126).unwrap_or(127) as u8;
+        }
+    }
 }
 
 /// Write the buffer `pixels`, whose dimensions are given by `bounds`,
 /// to the file named `filename`.
-fn write_image(_filename: &str, _pixels: &[u8], _bounds: (usize, usize)) {
-    todo!()
+fn write_image(filename: &str, pixels: &[u8], bounds: (usize, usize)) {
+    let (wh, ww) = bounds;
+    let f = File::create(filename).unwrap();
+    let pe = PngEncoder::new(f);
+    let _ = pe.write_image(pixels, ww as u32, wh as u32, ExtendedColorType::L8);
 }
 
 fn main() {
