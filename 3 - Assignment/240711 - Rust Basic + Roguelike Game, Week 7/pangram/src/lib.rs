@@ -1,6 +1,12 @@
 /// Determine whether a sentence is a pangram.
 pub fn is_pangram(sentence: &str) -> bool {
-    unimplemented!("Is {sentence} a pangram?");
+    let sentence = sentence.to_ascii_lowercase();
+    for c in 'a'..='z' {
+        if !sentence.contains(c) {
+            return false;
+        }
+    }
+    true
 }
 
 #[test]
