@@ -1,9 +1,19 @@
 #![allow(clippy::needless_borrow)]
 
 pub fn find(array: &[i32], key: i32) -> Option<usize> {
-    unimplemented!(
-        "Using the binary search algorithm, find the element '{key}' in the array '{array:?}' and return its index."
-    );
+    let mut l = 0;
+    let mut r = array.len();
+
+    while l < r {
+        let m = (l + r) >> 1;
+
+        match key.cmp(&array[m]) {
+            std::cmp::Ordering::Equal => return Some(m),
+            std::cmp::Ordering::Less => r = m,
+            std::cmp::Ordering::Greater => l = m + 1,
+        }
+    }
+    None
 }
 
 #[test]
